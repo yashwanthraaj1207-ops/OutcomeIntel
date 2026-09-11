@@ -91,14 +91,11 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     }
 
     // 4. Server-side environment variable resolution (prioritizing GEMINI_API_KEY)
-    const apiKey =
-      process.env.GEMINI_API_KEY ||
-      process.env.VITE_GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_API_KEY;
 
-    const model =
-      process.env.GEMINI_MODEL ||
-      process.env.VITE_GEMINI_MODEL ||
-      'gemini-2.5-flash-lite';
+  const model =
+  process.env.GEMINI_MODEL ||
+  'gemini-2.5-flash-lite';
 
     // 5. Delegate to verified server handler
     const result = await handleGeminiRecommendationRequest(
