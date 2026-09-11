@@ -1,9 +1,5 @@
 import { handleGeminiRecommendationRequest } from '../../src/server/geminiBackend';
 
-declare const process: {
-  env: Record<string, string | undefined>;
-};
-
 export interface ApiRequest {
   body?: any;
   query?: Record<string, string | string[]>;
@@ -37,20 +33,28 @@ function sendJson(res: ApiResponse, statusCode: number, data: any) {
       return;
     }
   }
+  if (typeof res.setHeader === 'function') {
+    res.setHeader('Content-Type', 'application/json');
+  }
   res.statusCode = statusCode;
-  res.setHeader('Content-Type', 'application/json');
+  if (typeof res.json === 'function') {
+    res.json(data);
+    return;
+  }
   res.end(JSON.stringify(data));
 }
 
 export default async function handler(req: ApiRequest, res: ApiResponse) {
   // 1. CORS headers for cross-origin / preview deployment safety
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
-  res.setHeader(
-    'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
-  );
+  if (typeof res.setHeader === 'function') {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
+    res.setHeader(
+      'Access-Control-Allow-Headers',
+      'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization'
+    );
+  }
 
   if (req.method === 'OPTIONS') {
     res.statusCode = 200;
