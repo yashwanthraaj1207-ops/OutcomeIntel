@@ -265,26 +265,26 @@ export function validateGeminiResponse(
   };
 }
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash-lite';
+export const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
 export const GEMINI_FALLBACK_CANDIDATE_MODELS: readonly string[] = [
-  'gemini-2.5-flash-lite',
   'gemini-flash-latest',
   'gemini-flash-lite-latest',
   'gemini-2.5-flash',
-  'gemini-1.5-flash'
+  'gemini-2.5-flash-lite',
+  'gemini-3.1-flash-lite'
 ];
 
 export async function handleGeminiRecommendationRequest(
   evidence: GeminiEvidencePayload,
   apiKey?: string,
   model = DEFAULT_GEMINI_MODEL
-): Promise<{ success: boolean; source: 'GEMINI_AI' | 'DETERMINISTIC_FALLBACK'; data?: GeminiRecommendationData; error?: string; modelUsed?: string }> {
+): Promise<{ success: boolean; source: 'GEMINI_AI' | 'DETERMINISTIC_FALLBACK'; data?: GeminiRecommendationData; error?: string; details?: string; modelUsed?: string }> {
   let cleanKey = apiKey ? apiKey.trim() : '';
   if (!cleanKey || cleanKey === 'your_gemini_api_key_here') {
     try {
       const proc = typeof globalThis !== 'undefined' ? (globalThis as any).process : undefined;
       if (proc && proc.env) {
-        cleanKey = (proc.env.GEMINI_API_KEY || proc.env.VITE_GEMINI_API_KEY || '').trim();
+        cleanKey = (proc.env.GEMINI_API_KEY || '').trim();
       }
     } catch {}
   }
@@ -292,7 +292,8 @@ export async function handleGeminiRecommendationRequest(
     return {
       success: false,
       source: 'DETERMINISTIC_FALLBACK',
-      error: 'GEMINI_API_KEY is not configured in Vercel environment variables or .env.'
+      error: 'GEMINI_API_KEY is not configured in Vercel environment variables or .env.',
+      details: 'Switched safely to verified deterministic evidence-based recommendation.'
     };
   }
 
@@ -301,7 +302,8 @@ export async function handleGeminiRecommendationRequest(
     return {
       success: false,
       source: 'DETERMINISTIC_FALLBACK',
-      error: 'Student identifier does not conform to anonymized format ^S\\d{3}$. PII protection engaged.'
+      error: 'Student identifier does not conform to anonymized format ^S\\d{3}$. PII protection engaged.',
+      details: 'Switched safely to verified deterministic evidence-based recommendation.'
     };
   }
 
@@ -309,9 +311,12 @@ export async function handleGeminiRecommendationRequest(
     return {
       success: false,
       source: 'DETERMINISTIC_FALLBACK',
-      error: 'Incomplete evidence payload. Course Outcome or topic diagnoses missing.'
+      error: 'Incomplete evidence payload. Course Outcome or topic diagnoses missing.',
+      details: 'Switched safely to verified deterministic evidence-based recommendation.'
     };
   }
+
+  console.log(`[Gemini API] Request received for student: ${evidence.studentId}, CO: ${evidence.coId}`);
 
   const { systemPrompt, userPrompt } = buildGeminiPrompt(evidence);
 
@@ -325,6 +330,7 @@ export async function handleGeminiRecommendationRequest(
   let lastError = 'Unable to contact Gemini API.';
 
   for (const currentModel of candidateModels) {
+    console.log(`[Gemini API] Model: ${currentModel}`);
     const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${cleanKey}`;
 
     try {
@@ -362,14 +368,44 @@ export async function handleGeminiRecommendationRequest(
 
       if (timeoutId) clearTimeout(timeoutId);
 
-      // On rate limit (429), model not found (404), or service unavailable (503), attempt next candidate model
-      if (res.status === 429 || res.status === 404 || res.status === 503) {
-        lastError = `Gemini API returned HTTP status ${res.status} on model ${currentModel}.`;
+      console.log(`[Gemini API] Response status: ${res.status}`);
+
+      // 401 / 403: Invalid or unauthorized key - stop trying immediately
+      if (res.status === 401 || res.status === 403) {
+        lastError = `Google Gemini API authorization failed (HTTP ${res.status}). Verify that GEMINI_API_KEY in Vercel settings is valid and enabled for the Generative Language API.`;
+        console.warn(`[Gemini API] Authorization failure (HTTP ${res.status}). Key rejected.`);
+        break;
+      }
+
+      // 404: Model not found or deprecated
+      if (res.status === 404) {
+        lastError = `Gemini model '${currentModel}' was not found or is unavailable (HTTP 404).`;
+        console.warn(`[Gemini API] Model ${currentModel} returned 404. Trying next candidate model...`);
+        continue;
+      }
+
+      // 429: Rate limit or quota exhausted
+      if (res.status === 429) {
+        lastError = `Google Gemini API rate limit or quota exceeded (HTTP 429). Check API quotas in Google AI Studio.`;
+        console.warn(`[Gemini API] Model ${currentModel} returned 429 (quota exceeded). Trying next candidate model...`);
+        continue;
+      }
+
+      // 500 / 503: Upstream service failure
+      if (res.status >= 500) {
+        lastError = `Google Gemini API service unavailable or internal error (HTTP ${res.status}).`;
+        console.warn(`[Gemini API] Model ${currentModel} returned HTTP ${res.status}. Trying next candidate model...`);
         continue;
       }
 
       if (!res.ok) {
-        lastError = `Gemini API returned HTTP status ${res.status}.`;
+        let errDetail = '';
+        try {
+          const errBody: any = await res.json();
+          errDetail = errBody?.error?.message ? `: ${errBody.error.message}` : '';
+        } catch {}
+        lastError = `Gemini API returned HTTP status ${res.status}${errDetail}.`;
+        console.warn(`[Gemini API] HTTP ${res.status} on model ${currentModel}${errDetail}`);
         continue;
       }
 
@@ -378,6 +414,7 @@ export async function handleGeminiRecommendationRequest(
 
       if (!candidateText || typeof candidateText !== 'string') {
         lastError = 'Empty or missing candidate response from Gemini API.';
+        console.warn(`[Gemini API] Empty candidate response on model ${currentModel}`);
         continue;
       }
 
@@ -386,15 +423,18 @@ export async function handleGeminiRecommendationRequest(
         parsedJson = JSON.parse(candidateText);
       } catch {
         lastError = 'Malformed JSON returned from Gemini API.';
+        console.warn(`[Gemini API] Malformed JSON candidate on model ${currentModel}`);
         continue;
       }
 
       const validation = validateGeminiResponse(parsedJson, evidence);
       if (!validation.isValid || !validation.validatedData) {
         lastError = validation.error || 'Gemini output failed academic validation.';
+        console.warn(`[Gemini API] Validation failed on model ${currentModel}: ${validation.error}`);
         continue;
       }
 
+      console.log(`[Gemini API] Successfully generated recommendation using model ${currentModel}`);
       return {
         success: true,
         source: 'GEMINI_AI',
@@ -411,15 +451,19 @@ export async function handleGeminiRecommendationRequest(
         ? 'Gemini API request timed out after 35 seconds.'
         : `Network connection failure: ${err?.message || 'Unable to contact Gemini API.'}`;
 
+      console.warn(`[Gemini API] Request error on model ${currentModel}: ${lastError}`);
+
       if (isTimeout) {
         break;
       }
     }
   }
 
+  console.warn(`[Gemini API] Fallback engaged. Reason: ${lastError}`);
   return {
     success: false,
     source: 'DETERMINISTIC_FALLBACK',
-    error: lastError
+    error: lastError,
+    details: 'Switched safely to verified deterministic evidence-based recommendation.'
   };
 }

@@ -60,9 +60,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     });
   }
 
-  const apiKey =
-    process.env.GEMINI_API_KEY ||
-    process.env.VITE_GEMINI_API_KEY;
+  // Server reads process.env.GEMINI_API_KEY only
+  const apiKey = process.env.GEMINI_API_KEY;
 
   const hasKey = Boolean(
     apiKey &&
@@ -71,10 +70,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     apiKey.trim() !== 'your_gemini_api_key_here'
   );
 
-  const model =
-    process.env.GEMINI_MODEL ||
-    process.env.VITE_GEMINI_MODEL ||
-    'gemini-2.5-flash-lite';
+  const model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
   return sendJson(res, 200, {
     hasKey,

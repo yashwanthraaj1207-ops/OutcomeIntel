@@ -4,20 +4,21 @@ import { handleGeminiRecommendationRequest } from './src/server/geminiBackend';
 
 function geminiApiPlugin(env: Record<string, string>): Plugin {
   const handler = async (req: any, res: any, next: any) => {
+    const pathname = req.url ? req.url.split('?')[0] : '';
     // Health / API key status check endpoint
-    if ((req.url === '/api/gemini/status' || req.url === '/api/status') && req.method === 'GET') {
+    if (pathname === '/api/gemini/status' && req.method === 'GET') {
       const apiKey =
-        env.VITE_GEMINI_API_KEY ||
         env.GEMINI_API_KEY ||
-        process.env.VITE_GEMINI_API_KEY ||
-        process.env.GEMINI_API_KEY;
+        process.env.GEMINI_API_KEY ||
+        env.VITE_GEMINI_API_KEY ||
+        process.env.VITE_GEMINI_API_KEY;
       const hasKey = Boolean(apiKey && apiKey.trim() && apiKey !== 'your_gemini_api_key_here');
       const model =
-        env.VITE_GEMINI_MODEL ||
         env.GEMINI_MODEL ||
-        process.env.VITE_GEMINI_MODEL ||
         process.env.GEMINI_MODEL ||
-        'gemini-2.5-flash-lite';
+        env.VITE_GEMINI_MODEL ||
+        process.env.VITE_GEMINI_MODEL ||
+        'gemini-flash-latest';
 
       res.setHeader('Content-Type', 'application/json');
       res.statusCode = 200;
@@ -32,10 +33,7 @@ function geminiApiPlugin(env: Record<string, string>): Plugin {
     }
 
     // Recommendation generation endpoint
-    if (
-      (req.url === '/api/gemini/recommendation' || req.url === '/api/recommendation') &&
-      req.method === 'POST'
-    ) {
+    if (pathname === '/api/gemini/recommendation' && req.method === 'POST') {
       let body = '';
       req.on('data', (chunk: any) => {
         body += chunk;
@@ -44,16 +42,16 @@ function geminiApiPlugin(env: Record<string, string>): Plugin {
         try {
           const evidence = JSON.parse(body);
           const apiKey =
-            env.VITE_GEMINI_API_KEY ||
             env.GEMINI_API_KEY ||
-            process.env.VITE_GEMINI_API_KEY ||
-            process.env.GEMINI_API_KEY;
+            process.env.GEMINI_API_KEY ||
+            env.VITE_GEMINI_API_KEY ||
+            process.env.VITE_GEMINI_API_KEY;
           const model =
-            env.VITE_GEMINI_MODEL ||
             env.GEMINI_MODEL ||
-            process.env.VITE_GEMINI_MODEL ||
             process.env.GEMINI_MODEL ||
-            'gemini-2.5-flash-lite';
+            env.VITE_GEMINI_MODEL ||
+            process.env.VITE_GEMINI_MODEL ||
+            'gemini-flash-latest';
 
           const result = await handleGeminiRecommendationRequest(evidence, apiKey, model);
           res.setHeader('Content-Type', 'application/json');

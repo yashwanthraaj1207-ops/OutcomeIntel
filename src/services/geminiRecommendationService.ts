@@ -7,12 +7,7 @@ import {
   InterventionRecommendation
 } from '../types/dataTypes';
 import { generateInterventionOptions } from './interventionEngine';
-import {
-  buildGeminiPrompt,
-  validateGeminiResponse,
-  DEFAULT_GEMINI_MODEL,
-  GEMINI_FALLBACK_CANDIDATE_MODELS
-} from '../server/geminiBackend';
+import { DEFAULT_GEMINI_MODEL } from '../server/geminiBackend';
 
 export type GeminiUIStatus =
   | 'Gemini AI Connected'
@@ -20,27 +15,14 @@ export type GeminiUIStatus =
   | 'Gemini Request Failed — Using Deterministic Fallback';
 
 /**
- * Safely resolves the Gemini API key across Vite browser environment and Node test runner.
- * Never exposes the key in logs or UI.
+ * Safely resolves the Gemini API key in Node test runners only.
+ * The browser environment never reads, stores, or exposes the API key.
  */
 export function getGeminiApiKey(): string | undefined {
-  // 1. Vite browser runtime
-  try {
-    if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
-      const v = (import.meta as any).env.VITE_GEMINI_API_KEY;
-      if (v && typeof v === 'string' && v.trim() !== '' && v !== 'your_gemini_api_key_here') {
-        return v.trim();
-      }
-    }
-  } catch {
-    // ignore
-  }
-
-  // 2. Node.js environment
   try {
     const globalProc = typeof globalThis !== 'undefined' ? (globalThis as any).process : undefined;
     if (globalProc && globalProc.env) {
-      const v = globalProc.env.VITE_GEMINI_API_KEY || globalProc.env.GEMINI_API_KEY;
+      const v = globalProc.env.GEMINI_API_KEY;
       if (v && typeof v === 'string' && v.trim() !== '' && v !== 'your_gemini_api_key_here') {
         return v.trim();
       }
@@ -57,17 +39,9 @@ export function getGeminiApiKey(): string | undefined {
  */
 export function getGeminiModel(): string {
   try {
-    if (typeof import.meta !== 'undefined' && (import.meta as any).env) {
-      const m = (import.meta as any).env.VITE_GEMINI_MODEL;
-      if (m && typeof m === 'string' && m.trim() !== '') return m.trim();
-    }
-  } catch {
-    // ignore
-  }
-  try {
     const globalProc = typeof globalThis !== 'undefined' ? (globalThis as any).process : undefined;
     if (globalProc && globalProc.env) {
-      const m = globalProc.env.VITE_GEMINI_MODEL || globalProc.env.GEMINI_MODEL;
+      const m = globalProc.env.GEMINI_MODEL;
       if (m && typeof m === 'string' && m.trim() !== '') return m.trim();
     }
   } catch {
@@ -196,107 +170,11 @@ export function buildDeterministicFallbackData(
 }
 
 /**
- * Calls Gemini directly from client when API key is present in client environment.
- */
-async function callDirectGeminiAPI(
-  evidence: GeminiEvidencePayload,
-  apiKey: string,
-  model = DEFAULT_GEMINI_MODEL
-): Promise<GeminiRecommendationResult> {
-  const candidateModels = Array.from(
-    new Set([
-      model,
-      ...GEMINI_FALLBACK_CANDIDATE_MODELS
-    ].filter(Boolean))
-  );
-
-  let lastError: Error | null = null;
-
-  for (const currentModel of candidateModels) {
-    const { systemPrompt, userPrompt } = buildGeminiPrompt(evidence);
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${apiKey}`;
-
-    const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    const timeoutId = controller
-      ? setTimeout(() => {
-          try {
-            controller.abort(new Error(`Gemini API request timed out for model ${currentModel}.`));
-          } catch {
-            controller.abort();
-          }
-        }, 35000)
-      : null;
-
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          systemInstruction: { parts: [{ text: systemPrompt }] },
-          contents: [{ role: 'user', parts: [{ text: userPrompt }] }],
-          generationConfig: { temperature: 0.2, responseMimeType: 'application/json' }
-        }),
-        signal: controller ? controller.signal : undefined
-      });
-
-      if (timeoutId) clearTimeout(timeoutId);
-
-      // Try next candidate model on rate limit or model unavailable
-      if (res.status === 429 || res.status === 404 || res.status === 503) {
-        lastError = new Error(`Gemini model ${currentModel} returned HTTP status ${res.status}.`);
-        continue;
-      }
-
-      if (!res.ok) {
-        lastError = new Error(`Gemini API returned HTTP status ${res.status}.`);
-        continue;
-      }
-
-      const json = await res.json();
-      const candidateText = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!candidateText) {
-        lastError = new Error('Empty response received from Gemini API.');
-        continue;
-      }
-
-      const parsedJson = JSON.parse(candidateText);
-      const validation = validateGeminiResponse(parsedJson, evidence);
-      if (!validation.isValid || !validation.validatedData) {
-        lastError = new Error(validation.error || 'Gemini output validation failed.');
-        continue;
-      }
-
-      return {
-        data: validation.validatedData,
-        source: 'GEMINI_AI',
-        status: 'SUCCESS',
-        statusMessage: 'AI recommendation generated using Google Gemini.',
-        isAIGenerated: true,
-        generatedAt: new Date().toISOString(),
-        modelUsed: currentModel
-      };
-    } catch (err: any) {
-      if (timeoutId) clearTimeout(timeoutId);
-      lastError = err;
-      const isTimeout =
-        err?.name === 'AbortError' ||
-        (typeof err?.message === 'string' && err.message.toLowerCase().includes('timed out')) ||
-        (typeof err?.message === 'string' && err.message.toLowerCase().includes('aborted'));
-      if (isTimeout) {
-        break;
-      }
-    }
-  }
-
-  throw lastError || new Error('All candidate Gemini models failed.');
-}
-
-/**
  * Main function to generate AI intervention recommendation.
  * 1. Checks evidence validity.
- * 2. Attempts backend server route /api/gemini/recommendation (35s timeout).
- * 3. If server route fails or is unavailable, attempts direct client Gemini API call if key is available.
- * 4. Gracefully falls back to deterministic recommendation on any failure with transparent error reason.
+ * 2. Issues POST request to serverless endpoint /api/gemini/recommendation.
+ * 3. Never contacts Gemini directly from browser; API key is held strictly server-side.
+ * 4. Gracefully falls back to deterministic evidence-based recommendation on any API or network issue.
  */
 export async function generateAIInterventionRecommendation(
   evidence: GeminiEvidencePayload,
@@ -316,7 +194,7 @@ export async function generateAIInterventionRecommendation(
     };
   }
 
-  // 2. Try backend endpoint first (/api/gemini/recommendation, then alias /api/recommendation)
+  // 2. Query serverless backend endpoint /api/gemini/recommendation
   let backendError: string | null = null;
 
   try {
@@ -331,7 +209,7 @@ export async function generateAIInterventionRecommendation(
         }, 35000)
       : null;
 
-    let res = await fetch('/api/gemini/recommendation', {
+    const res = await fetch('/api/gemini/recommendation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -339,25 +217,6 @@ export async function generateAIInterventionRecommendation(
       body: JSON.stringify(evidence),
       signal: controller ? controller.signal : undefined
     });
-
-    // If primary route returned 404, attempt alias route /api/recommendation
-    if (res.status === 404) {
-      try {
-        const altRes = await fetch('/api/recommendation', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(evidence),
-          signal: controller ? controller.signal : undefined
-        });
-        if (altRes.ok || altRes.status !== 404) {
-          res = altRes;
-        }
-      } catch {
-        // retain original response
-      }
-    }
 
     if (timeoutId) clearTimeout(timeoutId);
 
@@ -374,7 +233,7 @@ export async function generateAIInterventionRecommendation(
           modelUsed: json.modelUsed || getGeminiModel()
         };
       }
-      backendError = json.error || `Backend returned status ${json.source || 'FALLBACK'}`;
+      backendError = json.error || `Gemini recommendation unavailable (${json.source || 'FALLBACK'})`;
     } else {
       let detailedErr = `Backend returned HTTP ${res.status}`;
       try {
@@ -383,7 +242,15 @@ export async function generateAIInterventionRecommendation(
           detailedErr = `${errJson.error} (HTTP ${res.status})`;
         }
       } catch {
-        // retain default HTTP status string
+        if (res.status === 404) {
+          detailedErr = 'Vercel API route /api/gemini/recommendation not found (HTTP 404). Ensure api/gemini/recommendation.ts is deployed.';
+        } else if (res.status === 401 || res.status === 403) {
+          detailedErr = 'API authorization failed (HTTP 401/403). Check GEMINI_API_KEY in Vercel settings.';
+        } else if (res.status === 429) {
+          detailedErr = 'Google Gemini rate limit / quota exceeded (HTTP 429).';
+        } else if (res.status >= 500) {
+          detailedErr = `Server error from /api/gemini/recommendation (HTTP ${res.status}).`;
+        }
       }
       backendError = detailedErr;
     }
@@ -398,41 +265,13 @@ export async function generateAIInterventionRecommendation(
       : (err?.message || 'Backend connection failed.');
   }
 
-  // 3. If backend failed or key is available directly in client, attempt direct Gemini API
-  const directApiKey = getGeminiApiKey();
-  if (directApiKey) {
-    try {
-      const directResult = await callDirectGeminiAPI(evidence, directApiKey, getGeminiModel());
-      return directResult;
-    } catch (directErr: any) {
-      const isTimeout =
-        directErr?.name === 'AbortError' ||
-        (typeof directErr?.message === 'string' && directErr.message.toLowerCase().includes('timed out')) ||
-        (typeof directErr?.message === 'string' && directErr.message.toLowerCase().includes('aborted'));
-
-      const directErrMsg = isTimeout
-        ? 'Gemini API request timed out after 35 seconds.'
-        : (directErr?.message || 'Direct Gemini API request failed.');
-
-      return {
-        data: fallbackData,
-        source: 'DETERMINISTIC_FALLBACK',
-        status: 'API_ERROR',
-        statusMessage: 'Gemini recommendation unavailable. Showing deterministic evidence-based recommendation.',
-        isAIGenerated: false,
-        error: directErrMsg
-      };
-    }
-  }
-
-  // 4. Fallback if no key or all attempts failed
-  const finalError = backendError || 'Gemini API key is not configured in .env.';
+  // 3. Transparent deterministic fallback with accurate error diagnostics
   return {
     data: fallbackData,
     source: 'DETERMINISTIC_FALLBACK',
     status: 'API_ERROR',
     statusMessage: 'Gemini recommendation unavailable. Showing deterministic evidence-based recommendation.',
     isAIGenerated: false,
-    error: finalError
+    error: backendError || 'Gemini service unavailable.'
   };
 }

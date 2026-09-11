@@ -68,6 +68,8 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
   }
 
   try {
+    console.log('[Gemini API] Recommendation request received');
+
     // 3. Body extraction (supporting pre-parsed JSON objects or raw string payloads)
     let evidence = req.body;
     if (typeof evidence === 'string') {
@@ -90,12 +92,19 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       });
     }
 
-    // 4. Server-side environment variable resolution (prioritizing GEMINI_API_KEY)
-  const apiKey = process.env.GEMINI_API_KEY;
+    // 4. Server-side environment variable resolution (GEMINI_API_KEY ONLY)
+    const apiKey = process.env.GEMINI_API_KEY;
+    const model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
-  const model =
-  process.env.GEMINI_MODEL ||
-  'gemini-2.5-flash-lite';
+    if (!apiKey || apiKey.trim() === '' || apiKey.trim() === 'your_gemini_api_key_here') {
+      console.warn('[Gemini API] Server-side GEMINI_API_KEY is not configured');
+      return sendJson(res, 200, {
+        success: false,
+        source: 'DETERMINISTIC_FALLBACK',
+        error: 'GEMINI_API_KEY is not configured in Vercel environment variables or .env.',
+        details: 'Switched safely to verified deterministic evidence-based recommendation.'
+      });
+    }
 
     // 5. Delegate to verified server handler
     const result = await handleGeminiRecommendationRequest(
@@ -104,12 +113,15 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
       model
     );
 
+    console.log(`[Gemini API] Request completed. Result source: ${result.source}`);
     return sendJson(res, 200, result);
   } catch (error: any) {
+    console.error('[Gemini API] Serverless execution error:', error?.message);
     return sendJson(res, 500, {
       success: false,
       source: 'DETERMINISTIC_FALLBACK',
-      error: error?.message || 'Internal server error while processing Gemini recommendation.'
+      error: error?.message || 'Internal server error while processing Gemini recommendation.',
+      details: 'Switched safely to verified deterministic evidence-based recommendation.'
     });
   }
 }
