@@ -1,0 +1,101 @@
+student_id,course_id,semester,assessment_id,assessment_type,assessment_date,question_id,topic,co_id,marks_obtained,max_marks
+S001,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,8.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,8.0,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,7.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,8.0,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,6.5,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,6.0,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,6.5,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,7.0,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,7.5,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,7.0,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,7.5,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,8.0,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,5.5,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,5.0,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,5.0,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,5.5,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,7.0,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,7.5,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,7.0,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,7.5,10.0
+S006,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,8.0,10.0
+S006,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,8.5,10.0
+S006,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,8.0,10.0
+S006,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,8.5,10.0
+S007,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,6.0,10.0
+S007,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,6.0,10.0
+S007,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,6.5,10.0
+S007,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,6.5,10.0
+S008,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,5.0,10.0
+S008,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,5.5,10.0
+S008,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,5.0,10.0
+S008,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,5.0,10.0
+S009,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,7.5,10.0
+S009,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,8.0,10.0
+S009,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,7.5,10.0
+S009,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,7.0,10.0
+S010,CS301,4,R1,Reassessment,2026-09-15,Q01,Process Scheduling,CO1,6.0,10.0
+S010,CS301,4,R1,Reassessment,2026-09-15,Q02,Process Scheduling,CO1,6.5,10.0
+S010,CS301,4,R1,Reassessment,2026-09-15,Q03,CPU Scheduling Algorithms,CO1,6.0,10.0
+S010,CS301,4,R1,Reassessment,2026-09-15,Q04,CPU Scheduling Algorithms,CO1,6.0,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q09,Deadlock Handling,CO3,7.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q10,Resource Allocation Graphs,CO3,7.0,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q09,Deadlock Handling,CO3,6.5,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q10,Resource Allocation Graphs,CO3,6.0,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q09,Deadlock Handling,CO3,8.0,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q10,Resource Allocation Graphs,CO3,8.5,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q09,Deadlock Handling,CO3,5.0,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q10,Resource Allocation Graphs,CO3,5.5,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q09,Deadlock Handling,CO3,7.0,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q10,Resource Allocation Graphs,CO3,7.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,8.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,8.0,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,8.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,9.0,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,7.5,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,7.0,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,7.5,10.0
+S002,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,8.0,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,8.0,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,8.5,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,8.0,10.0
+S003,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,8.5,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,6.5,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,6.0,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,6.5,10.0
+S004,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,7.0,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,7.5,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,8.0,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,7.5,10.0
+S005,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,8.0,10.0
+S006,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,8.5,10.0
+S006,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,8.0,10.0
+S006,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,8.5,10.0
+S006,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,9.0,10.0
+S007,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,7.0,10.0
+S007,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,6.5,10.0
+S007,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,7.0,10.0
+S007,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,7.5,10.0
+S008,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,6.0,10.0
+S008,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,6.5,10.0
+S008,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,6.0,10.0
+S008,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,6.5,10.0
+S009,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,8.0,10.0
+S009,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,8.5,10.0
+S009,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,8.0,10.0
+S009,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,8.5,10.0
+S010,CS301,4,R1,Reassessment,2026-09-15,Q05,Deadlocks,CO2,7.0,10.0
+S010,CS301,4,R1,Reassessment,2026-09-15,Q06,Deadlock Prevention,CO2,7.5,10.0
+S010,CS301,4,R1,Reassessment,2026-09-15,Q07,Deadlocks,CO2,7.0,10.0
+S010,CS301,4,R1,Reassessment,2026-09-15,Q08,Deadlock Prevention,CO2,7.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q13,Paging,CO4,8.0,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q14,Memory Allocation,CO4,8.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q15,Paging,CO4,8.0,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q16,Memory Allocation,CO4,8.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q17,File Allocation,CO5,8.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q18,File Systems,CO5,9.0,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q19,File Allocation,CO5,8.5,10.0
+S001,CS301,4,R1,Reassessment,2026-09-15,Q20,File Systems,CO5,9.0,10.0
+
+

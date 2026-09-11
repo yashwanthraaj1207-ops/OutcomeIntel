@@ -1,0 +1,25 @@
+course_id,question_id,topic,co_id
+CS301,Q01,Process Scheduling,CO1
+CS301,Q02,CPU Scheduling Algorithms,CO1
+CS301,Q03,Process Scheduling,CO1
+CS301,Q04,CPU Scheduling Algorithms,CO1
+CS301,Q05,Deadlocks,CO2
+CS301,Q06,Deadlock Prevention,CO2
+CS301,Q07,Deadlocks,CO2
+CS301,Q08,Deadlock Prevention,CO2
+CS301,Q09,Synchronization,CO3
+CS301,Q10,Critical Section,CO3
+CS301,Q11,Synchronization,CO3
+CS301,Q12,Critical Section,CO3
+CS301,Q13,Paging,CO4
+CS301,Q14,Memory Allocation,CO4
+CS301,Q15,Paging,CO4
+CS301,Q16,Memory Allocation,CO4
+CS301,Q17,File Allocation,CO5
+CS301,Q18,File Systems,CO5
+CS301,Q19,File Allocation,CO5
+CS301,Q20,File Systems,CO5
+CS302,Q21,Database Fundamentals,CO1
+CS302,Q22,SQL Queries,CO1
+CS302,Q23,Database Fundamentals,CO1
+CS302,Q24,SQL Queries,CO1
