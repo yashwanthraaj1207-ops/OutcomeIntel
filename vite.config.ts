@@ -5,7 +5,7 @@ import { handleGeminiRecommendationRequest } from './src/server/geminiBackend';
 function geminiApiPlugin(env: Record<string, string>): Plugin {
   const handler = async (req: any, res: any, next: any) => {
     // Health / API key status check endpoint
-    if (req.url === '/api/gemini/status' && req.method === 'GET') {
+    if ((req.url === '/api/gemini/status' || req.url === '/api/status') && req.method === 'GET') {
       const apiKey =
         env.VITE_GEMINI_API_KEY ||
         env.GEMINI_API_KEY ||
@@ -32,7 +32,10 @@ function geminiApiPlugin(env: Record<string, string>): Plugin {
     }
 
     // Recommendation generation endpoint
-    if (req.url === '/api/gemini/recommendation' && req.method === 'POST') {
+    if (
+      (req.url === '/api/gemini/recommendation' || req.url === '/api/recommendation') &&
+      req.method === 'POST'
+    ) {
       let body = '';
       req.on('data', (chunk: any) => {
         body += chunk;

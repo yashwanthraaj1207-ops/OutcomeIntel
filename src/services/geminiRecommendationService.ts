@@ -316,7 +316,7 @@ export async function generateAIInterventionRecommendation(
     };
   }
 
-  // 2. Try backend endpoint first (/api/gemini/recommendation)
+  // 2. Try backend endpoint first (/api/gemini/recommendation, then alias /api/recommendation)
   let backendError: string | null = null;
 
   try {
@@ -331,7 +331,7 @@ export async function generateAIInterventionRecommendation(
         }, 35000)
       : null;
 
-    const res = await fetch('/api/gemini/recommendation', {
+    let res = await fetch('/api/gemini/recommendation', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -339,6 +339,25 @@ export async function generateAIInterventionRecommendation(
       body: JSON.stringify(evidence),
       signal: controller ? controller.signal : undefined
     });
+
+    // If primary route returned 404, attempt alias route /api/recommendation
+    if (res.status === 404) {
+      try {
+        const altRes = await fetch('/api/recommendation', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(evidence),
+          signal: controller ? controller.signal : undefined
+        });
+        if (altRes.ok || altRes.status !== 404) {
+          res = altRes;
+        }
+      } catch {
+        // retain original response
+      }
+    }
 
     if (timeoutId) clearTimeout(timeoutId);
 
@@ -355,9 +374,18 @@ export async function generateAIInterventionRecommendation(
           modelUsed: json.modelUsed || getGeminiModel()
         };
       }
-      backendError = json.error || `Backend returned status ${json.source}`;
+      backendError = json.error || `Backend returned status ${json.source || 'FALLBACK'}`;
     } else {
-      backendError = `Backend returned HTTP ${res.status}`;
+      let detailedErr = `Backend returned HTTP ${res.status}`;
+      try {
+        const errJson = await res.json();
+        if (errJson && errJson.error) {
+          detailedErr = `${errJson.error} (HTTP ${res.status})`;
+        }
+      } catch {
+        // retain default HTTP status string
+      }
+      backendError = detailedErr;
     }
   } catch (err: any) {
     const isTimeout =

@@ -6,10 +6,12 @@ interface AcademicAttentionPanelProps {
   items: AcademicAttentionItem[];
 }
 
-export const AcademicAttentionPanel: React.FC<AcademicAttentionPanelProps> = ({ items }) => {
+export const AcademicAttentionPanel: React.FC<AcademicAttentionPanelProps> = ({ items = [] }) => {
   const [filterCategory, setFilterCategory] = useState<string>('ALL');
 
-  const filtered = items.filter(item => {
+  const safeItems = Array.isArray(items) ? items : [];
+
+  const filtered = safeItems.filter(item => {
     if (filterCategory === 'ALL') return true;
     return item.category === filterCategory;
   });
@@ -80,7 +82,7 @@ export const AcademicAttentionPanel: React.FC<AcademicAttentionPanelProps> = ({ 
                 : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             }`}
           >
-            All ({items.length})
+            All ({safeItems.length})
           </button>
           <button
             onClick={() => setFilterCategory('CRITICAL')}

@@ -270,8 +270,8 @@ export const GEMINI_FALLBACK_CANDIDATE_MODELS: readonly string[] = [
   'gemini-2.5-flash-lite',
   'gemini-flash-latest',
   'gemini-flash-lite-latest',
-  'gemini-3.1-flash-lite',
-  'gemini-2.5-flash'
+  'gemini-2.5-flash',
+  'gemini-1.5-flash'
 ];
 
 export async function handleGeminiRecommendationRequest(
@@ -284,7 +284,7 @@ export async function handleGeminiRecommendationRequest(
     try {
       const proc = typeof globalThis !== 'undefined' ? (globalThis as any).process : undefined;
       if (proc && proc.env) {
-        cleanKey = (proc.env.VITE_GEMINI_API_KEY || proc.env.GEMINI_API_KEY || '').trim();
+        cleanKey = (proc.env.GEMINI_API_KEY || proc.env.VITE_GEMINI_API_KEY || '').trim();
       }
     } catch {}
   }
@@ -292,7 +292,7 @@ export async function handleGeminiRecommendationRequest(
     return {
       success: false,
       source: 'DETERMINISTIC_FALLBACK',
-      error: 'VITE_GEMINI_API_KEY is not configured in .env.'
+      error: 'GEMINI_API_KEY is not configured in Vercel environment variables or .env.'
     };
   }
 
