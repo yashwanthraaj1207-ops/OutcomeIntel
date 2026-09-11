@@ -265,13 +265,10 @@ export function validateGeminiResponse(
   };
 }
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
+export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
 export const GEMINI_FALLBACK_CANDIDATE_MODELS: readonly string[] = [
-  'gemini-flash-latest',
-  'gemini-flash-lite-latest',
   'gemini-2.5-flash',
-  'gemini-2.5-flash-lite',
-  'gemini-3.1-flash-lite'
+  'gemini-2.5-flash-lite'
 ];
 
 export async function handleGeminiRecommendationRequest(
@@ -370,31 +367,67 @@ export async function handleGeminiRecommendationRequest(
 
       console.log(`[Gemini API] Response status: ${res.status}`);
 
+      // 400: Bad Request or invalid key passed to Google API
+      if (res.status === 400) {
+        let errDetail = '';
+        try {
+          const errBody: any = await res.json();
+          errDetail = errBody?.error?.message ? `: ${errBody.error.message}` : '';
+        } catch {}
+        lastError = `Google Gemini API request rejected (HTTP 400)${errDetail}.`;
+        console.warn(`[Gemini API] HTTP 400 on model ${currentModel}${errDetail}`);
+        if (errDetail.toLowerCase().includes('api key') || errDetail.toLowerCase().includes('key not valid')) {
+          lastError = `Google Gemini API key is invalid or unauthorized (HTTP 400)${errDetail}. Check GEMINI_API_KEY in Vercel.`;
+          break;
+        }
+        continue;
+      }
+
       // 401 / 403: Invalid or unauthorized key - stop trying immediately
       if (res.status === 401 || res.status === 403) {
-        lastError = `Google Gemini API authorization failed (HTTP ${res.status}). Verify that GEMINI_API_KEY in Vercel settings is valid and enabled for the Generative Language API.`;
+        let errDetail = '';
+        try {
+          const errBody: any = await res.json();
+          errDetail = errBody?.error?.message ? `: ${errBody.error.message}` : '';
+        } catch {}
+        lastError = `Google Gemini API authorization failed (HTTP ${res.status})${errDetail}. Verify that GEMINI_API_KEY in Vercel settings is valid and enabled for the Generative Language API.`;
         console.warn(`[Gemini API] Authorization failure (HTTP ${res.status}). Key rejected.`);
         break;
       }
 
-      // 404: Model not found or deprecated
+      // 404: Model not found or REST endpoint not found
       if (res.status === 404) {
-        lastError = `Gemini model '${currentModel}' was not found or is unavailable (HTTP 404).`;
-        console.warn(`[Gemini API] Model ${currentModel} returned 404. Trying next candidate model...`);
+        let notFoundDetail = '';
+        try {
+          const errBody: any = await res.json();
+          notFoundDetail = errBody?.error?.message ? `: ${errBody.error.message}` : '';
+        } catch {}
+        lastError = `Gemini model '${currentModel}' or REST endpoint not found (HTTP 404)${notFoundDetail}. Verify model name in Google AI Studio.`;
+        console.warn(`[Gemini API] Model ${currentModel} returned 404${notFoundDetail}. Trying next candidate model...`);
         continue;
       }
 
       // 429: Rate limit or quota exhausted
       if (res.status === 429) {
-        lastError = `Google Gemini API rate limit or quota exceeded (HTTP 429). Check API quotas in Google AI Studio.`;
-        console.warn(`[Gemini API] Model ${currentModel} returned 429 (quota exceeded). Trying next candidate model...`);
+        let quotaDetail = '';
+        try {
+          const errBody: any = await res.json();
+          quotaDetail = errBody?.error?.message ? `: ${errBody.error.message}` : '';
+        } catch {}
+        lastError = `Google Gemini API rate limit or quota exceeded (HTTP 429)${quotaDetail}. Check API quotas in Google AI Studio.`;
+        console.warn(`[Gemini API] Model ${currentModel} returned 429 (quota exceeded)${quotaDetail}. Trying next candidate model...`);
         continue;
       }
 
       // 500 / 503: Upstream service failure
       if (res.status >= 500) {
-        lastError = `Google Gemini API service unavailable or internal error (HTTP ${res.status}).`;
-        console.warn(`[Gemini API] Model ${currentModel} returned HTTP ${res.status}. Trying next candidate model...`);
+        let serverErrDetail = '';
+        try {
+          const errBody: any = await res.json();
+          serverErrDetail = errBody?.error?.message ? `: ${errBody.error.message}` : '';
+        } catch {}
+        lastError = `Google Gemini API service unavailable or internal error (HTTP ${res.status})${serverErrDetail}.`;
+        console.warn(`[Gemini API] Model ${currentModel} returned HTTP ${res.status}${serverErrDetail}. Trying next candidate model...`);
         continue;
       }
 

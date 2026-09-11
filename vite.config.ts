@@ -6,7 +6,24 @@ function geminiApiPlugin(env: Record<string, string>): Plugin {
   const handler = async (req: any, res: any, next: any) => {
     const pathname = req.url ? req.url.split('?')[0] : '';
     // Health / API key status check endpoint
-    if (pathname === '/api/gemini/status' && req.method === 'GET') {
+    if (pathname === '/api/gemini/status') {
+      if (req.method === 'OPTIONS') {
+        res.statusCode = 200;
+        res.end();
+        return;
+      }
+      if (req.method !== 'GET') {
+        res.setHeader('Content-Type', 'application/json');
+        res.statusCode = 405;
+        res.end(
+          JSON.stringify({
+            hasKey: false,
+            error: 'Method Not Allowed. Expected GET.'
+          })
+        );
+        return;
+      }
+
       const apiKey =
         env.GEMINI_API_KEY ||
         process.env.GEMINI_API_KEY ||
@@ -18,7 +35,7 @@ function geminiApiPlugin(env: Record<string, string>): Plugin {
         process.env.GEMINI_MODEL ||
         env.VITE_GEMINI_MODEL ||
         process.env.VITE_GEMINI_MODEL ||
-        'gemini-flash-latest';
+        'gemini-2.5-flash';
 
       res.setHeader('Content-Type', 'application/json');
       res.statusCode = 200;
@@ -33,7 +50,25 @@ function geminiApiPlugin(env: Record<string, string>): Plugin {
     }
 
     // Recommendation generation endpoint
-    if (pathname === '/api/gemini/recommendation' && req.method === 'POST') {
+    if (pathname === '/api/gemini/recommendation') {
+      if (req.method === 'OPTIONS') {
+        res.statusCode = 200;
+        res.end();
+        return;
+      }
+      if (req.method !== 'POST') {
+        res.setHeader('Content-Type', 'application/json');
+        res.statusCode = 405;
+        res.end(
+          JSON.stringify({
+            success: false,
+            source: 'DETERMINISTIC_FALLBACK',
+            error: 'Method Not Allowed. Expected POST.'
+          })
+        );
+        return;
+      }
+
       let body = '';
       req.on('data', (chunk: any) => {
         body += chunk;
@@ -51,7 +86,7 @@ function geminiApiPlugin(env: Record<string, string>): Plugin {
             process.env.GEMINI_MODEL ||
             env.VITE_GEMINI_MODEL ||
             process.env.VITE_GEMINI_MODEL ||
-            'gemini-flash-latest';
+            'gemini-2.5-flash';
 
           const result = await handleGeminiRecommendationRequest(evidence, apiKey, model);
           res.setHeader('Content-Type', 'application/json');
@@ -69,6 +104,7 @@ function geminiApiPlugin(env: Record<string, string>): Plugin {
           );
         }
       });
+      return;
     } else {
       next();
     }

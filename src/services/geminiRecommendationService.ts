@@ -237,13 +237,22 @@ export async function generateAIInterventionRecommendation(
     } else {
       let detailedErr = `Backend returned HTTP ${res.status}`;
       try {
-        const errJson = await res.json();
-        if (errJson && errJson.error) {
-          detailedErr = `${errJson.error} (HTTP ${res.status})`;
+        const errText = await res.text();
+        try {
+          const errJson = JSON.parse(errText);
+          if (errJson && errJson.error) {
+            detailedErr = `${errJson.error} (HTTP ${res.status})`;
+          } else if (errJson && errJson.details) {
+            detailedErr = `${errJson.details} (HTTP ${res.status})`;
+          }
+        } catch {
+          if (errText && errText.trim().length > 0 && errText.length < 300) {
+            detailedErr = `${errText.trim()} (HTTP ${res.status})`;
+          }
         }
       } catch {
         if (res.status === 404) {
-          detailedErr = 'Vercel API route /api/gemini/recommendation not found (HTTP 404). Ensure api/gemini/recommendation.ts is deployed.';
+          detailedErr = 'API route /api/gemini/recommendation returned HTTP 404.';
         } else if (res.status === 401 || res.status === 403) {
           detailedErr = 'API authorization failed (HTTP 401/403). Check GEMINI_API_KEY in Vercel settings.';
         } else if (res.status === 429) {

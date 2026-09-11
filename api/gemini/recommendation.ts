@@ -94,7 +94,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
 
     // 4. Server-side environment variable resolution (GEMINI_API_KEY ONLY)
     const apiKey = process.env.GEMINI_API_KEY;
-    const model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
+    const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
     if (!apiKey || apiKey.trim() === '' || apiKey.trim() === 'your_gemini_api_key_here') {
       console.warn('[Gemini API] Server-side GEMINI_API_KEY is not configured');
