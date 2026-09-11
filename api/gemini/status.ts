@@ -74,7 +74,7 @@ export default async function handler(req: ApiRequest, res: ApiResponse) {
     apiKey.trim() !== 'your_gemini_api_key_here'
   );
 
-  const model = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+  const model = process.env.GEMINI_MODEL || 'gemini-flash-latest';
 
   return sendJson(res, 200, {
     hasKey,

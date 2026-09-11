@@ -265,8 +265,12 @@ export function validateGeminiResponse(
   };
 }
 
-export const DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash';
+export const DEFAULT_GEMINI_MODEL = 'gemini-flash-latest';
 export const GEMINI_FALLBACK_CANDIDATE_MODELS: readonly string[] = [
+  'gemini-flash-latest',
+  'gemini-flash-lite-latest',
+  'gemini-3.5-flash',
+  'gemini-3.6-flash',
   'gemini-2.5-flash',
   'gemini-2.5-flash-lite'
 ];
@@ -328,7 +332,7 @@ export async function handleGeminiRecommendationRequest(
 
   for (const currentModel of candidateModels) {
     console.log(`[Gemini API] Model: ${currentModel}`);
-    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${cleanKey}`;
+    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${encodeURIComponent(cleanKey)}`;
 
     try {
       const controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
@@ -344,7 +348,10 @@ export async function handleGeminiRecommendationRequest(
 
       const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': cleanKey
+        },
         body: JSON.stringify({
           systemInstruction: {
             parts: [{ text: systemPrompt }]

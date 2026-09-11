@@ -719,6 +719,10 @@ async function runLiveTest() {
     try {
       const candidateModels = Array.from(new Set([
         envModel,
+        'gemini-flash-latest',
+        'gemini-flash-lite-latest',
+        'gemini-3.5-flash',
+        'gemini-3.6-flash',
         'gemini-2.5-flash',
         'gemini-2.5-flash-lite'
       ]));
@@ -727,28 +731,37 @@ async function runLiveTest() {
       let lastErr = null;
 
       for (const currentModel of candidateModels) {
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${envKey}`;
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ role: 'user', parts: [{ text: 'Return valid JSON with key "greeting": "hello"' }] }],
-            generationConfig: { responseMimeType: 'application/json' }
-          })
-        });
+        try {
+          const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${currentModel}:generateContent?key=${encodeURIComponent(envKey)}`;
+          const res = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-goog-api-key': envKey
+            },
+            body: JSON.stringify({
+              contents: [{ role: 'user', parts: [{ text: 'Return valid JSON with key "greeting": "hello"' }] }],
+              generationConfig: { responseMimeType: 'application/json' }
+            }),
+            signal: AbortSignal.timeout(10000)
+          });
 
-        if (res.status === 429 || res.status === 404 || res.status === 503) {
-          lastErr = new Error(`Model ${currentModel} returned HTTP ${res.status}`);
+          if (res.status === 429 || res.status === 404 || res.status === 503) {
+            lastErr = new Error(`Model ${currentModel} returned HTTP ${res.status}`);
+            continue;
+          }
+
+          assert.strictEqual(res.status, 200);
+          const json = await res.json();
+          const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+          assert.ok(text && text.includes('greeting'));
+          pass(`Test 21: Live Google Gemini API request executed and verified successfully with model ${currentModel} (HTTP 200, valid JSON)`);
+          passed = true;
+          break;
+        } catch (mErr) {
+          lastErr = mErr;
           continue;
         }
-
-        assert.strictEqual(res.status, 200);
-        const json = await res.json();
-        const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-        assert.ok(text && text.includes('greeting'));
-        pass(`Test 21: Live Google Gemini API request executed and verified successfully with model ${currentModel} (HTTP 200, valid JSON)`);
-        passed = true;
-        break;
       }
 
       if (!passed) {
